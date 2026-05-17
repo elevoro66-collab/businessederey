@@ -1,8 +1,7 @@
 'use client'
 import { useState, FormEvent } from 'react'
 
-// 1. KORUMA: Eğer projede "import { CheckoutModal }" diye çağrılıyorsa burası kurtaracak
-export function CheckoutModal({ isOpen, onClose, cartItems, clearCart }: any) {
+export function CheckoutModal({ isOpen, onClose, cartItems = [], clearCart }: any) {
   const [name, setName] = useState('')
   const [phone, setPhone] = useState('')
   const [city, setCity] = useState('')
@@ -12,6 +11,12 @@ export function CheckoutModal({ isOpen, onClose, cartItems, clearCart }: any) {
 
   if (!isOpen) return null
 
+  // Sepet boşsa veya undefined ise uygulamanın çökmesini engelleyen güvenli hesaplama
+  const mainItem = cartItems && cartItems.length > 0 ? cartItems[0] : null
+  const totalPriceCents = cartItems && cartItems.length > 0 
+    ? cartItems.reduce((t: number, item: any) => t + (item?.bundle?.price_cents || item?.price_cents || 0) * (item?.quantity || 1), 0)
+    : 0
+
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault()
     if (!name || !phone || !city || !address) {
@@ -20,9 +25,6 @@ export function CheckoutModal({ isOpen, onClose, cartItems, clearCart }: any) {
     }
 
     setIsSubmitting(true)
-
-    const mainItem = cartItems[0]
-    const totalPriceCents = cartItems.reduce((t: number, item: any) => t + (item.bundle?.price_cents || item.price_cents) * item.quantity, 0)
 
     const orderData = {
       customer_name: name,
@@ -43,7 +45,7 @@ export function CheckoutModal({ isOpen, onClose, cartItems, clearCart }: any) {
 
       if (res.ok) {
         setIsSuccess(true)
-        clearCart()
+        if (clearCart) clearCart()
       } else {
         alert('Sipariş gönderilirken bir hata oluştu, lütfen tekrar deneyin.')
       }
@@ -103,5 +105,4 @@ export function CheckoutModal({ isOpen, onClose, cartItems, clearCart }: any) {
   )
 }
 
-// 2. KORUMA: Eğer projede "import CheckoutModal" diye çağrılıyorsa burası kurtaracak
 export default CheckoutModal;
