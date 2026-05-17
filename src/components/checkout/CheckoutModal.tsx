@@ -1,5 +1,5 @@
 'use client'
-import { useState } from 'react'
+import { useState, FormEvent } from 'react'
 
 export default function CheckoutModal({ isOpen, onClose, cartItems, clearCart }: any) {
   const [name, setName] = useState('')
@@ -11,7 +11,7 @@ export default function CheckoutModal({ isOpen, onClose, cartItems, clearCart }:
 
   if (!isOpen) return null
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault()
     if (!name || !phone || !city || !address) {
       alert('Lütfen tüm alanları doldurun patron!')
@@ -20,7 +20,6 @@ export default function CheckoutModal({ isOpen, onClose, cartItems, clearCart }:
 
     setIsSubmitting(true)
 
-    // Sepetteki ilk ürünü ana ürün olarak alıyoruz (veya sepet özetini çıkartıyoruz)
     const mainItem = cartItems[0]
     const totalPriceCents = cartItems.reduce((t: number, item: any) => t + (item.bundle?.price_cents || item.price_cents) * item.quantity, 0)
 
@@ -31,11 +30,10 @@ export default function CheckoutModal({ isOpen, onClose, cartItems, clearCart }:
       address: address,
       product_name: mainItem ? `${mainItem.name} (${mainItem.bundle?.label || 'Standart'})` : 'Mağaza Ürünü',
       price_cents: totalPriceCents,
-      status: 'BEKLEYEN', // İlk başta aktif sipariş havuzuna düşmesi için
+      status: 'BEKLEYEN',
     }
 
     try {
-      // 🌍 LOCAL STORAGE YERİNE GERÇEK İNTERNET API'MİZE POST ATIYORUZ
       const res = await fetch('/api/orders', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -44,7 +42,7 @@ export default function CheckoutModal({ isOpen, onClose, cartItems, clearCart }:
 
       if (res.ok) {
         setIsSuccess(true)
-        clearCart() // Sepeti temizle
+        clearCart()
       } else {
         alert('Sipariş gönderilirken bir hata oluştu, lütfen tekrar deneyin.')
       }
@@ -57,7 +55,7 @@ export default function CheckoutModal({ isOpen, onClose, cartItems, clearCart }:
   }
 
   return (
-    <div className="fixed inset-0 bg-stone-950/60 z-50 flex items-center justify-center p-4 backdrop-blur-sm animate-fade-in">
+    <div className="fixed inset-0 bg-stone-950/60 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
       <div className="bg-white w-full max-w-md rounded-2xl p-6 shadow-2xl relative border border-stone-100 text-black">
         
         {!isSuccess ? (
@@ -95,7 +93,7 @@ export default function CheckoutModal({ isOpen, onClose, cartItems, clearCart }:
           <div className="text-center py-6 space-y-3">
             <div className="text-4xl">🎉</div>
             <h2 className="text-xl font-black uppercase text-green-600">Sipariş Alındı!</h2>
-            <p className="text-stone-500 text-xs px-4">Siber dükkanımızdan verdiğiniz sipariş başarıyla bulut merkezine ulaştı patron.</p>
+            <p className="text-stone-500 text-xs px-4">Siparişiniz başarıyla bulut merkezine ulaştı patron.</p>
             <button onClick={onClose} className="mt-4 bg-stone-900 text-white px-6 py-2 rounded-xl text-xs font-bold uppercase cursor-pointer">Kapat</button>
           </div>
         )}
