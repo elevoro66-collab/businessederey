@@ -1,7 +1,8 @@
 'use client'
 import { useState, FormEvent } from 'react'
 
-export default function CheckoutModal({ isOpen, onClose, cartItems, clearCart }: any) {
+// 1. KORUMA: Eğer projede "import { CheckoutModal }" diye çağrılıyorsa burası kurtaracak
+export function CheckoutModal({ isOpen, onClose, cartItems, clearCart }: any) {
   const [name, setName] = useState('')
   const [phone, setPhone] = useState('')
   const [city, setCity] = useState('')
@@ -101,3 +102,6 @@ export default function CheckoutModal({ isOpen, onClose, cartItems, clearCart }:
     </div>
   )
 }
+
+// 2. KORUMA: Eğer projede "import CheckoutModal" diye çağrılıyorsa burası kurtaracak
+export default CheckoutModal;
