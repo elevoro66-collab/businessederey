@@ -1,21 +1,43 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@/lib/server'
-import { adminClient } from '@/lib/admin'
+import { NextRequest, NextResponse } from 'next/server';
+import { getAdminClient } from '@/lib/admin'; // Zırhlı yeni fonksiyonumuz
 
 export async function GET(req: NextRequest) {
-  // 1. Verify admin session
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  try {
+    // Supabase bağlantısını istek anında kuruyoruz (Build sırasında çökmeyi önler)
+    const supabase = getAdminClient();
 
-  // 2. Generate a 60-second signed URL
-  const path = req.nextUrl.searchParams.get('path')
-  if (!path) return NextResponse.json({ error: 'Missing path' }, { status: 400 })
+    // Veri tabanından dekont/makbuz verilerini çekiyoruz
+    const { data, error } = await supabase
+      .from('receipts') 
+      .select('*')
+      .order('created_at', { ascending: false });
 
-  const { data, error } = await adminClient.storage
-    .from('receipts')
-    .createSignedUrl(path, 60)  // 60 seconds — view-once
+    if (error) {
+      return NextResponse.json({ errors: [error.message] }, { status: 500 });
+    }
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
-  return NextResponse.json({ url: data.signedUrl })
+    return NextResponse.json(data || []);
+  } catch (err: any) {
+    return NextResponse.json({ errors: [err.message] }, { status: 500 });
+  }
+}
+
+export async function POST(req: NextRequest) {
+  try {
+    const supabase = getAdminClient();
+    const body = await req.json();
+
+    const { data, error } = await supabase
+      .from('receipts')
+      .insert([body])
+      .select();
+
+    if (error) {
+      return NextResponse.json({ errors: [error.message] }, { status: 500 });
+    }
+
+    return NextResponse.json(data);
+  } catch (err: any) {
+    return NextResponse.json({ errors: [err.message] }, { status: 500 });
+  }
 }
